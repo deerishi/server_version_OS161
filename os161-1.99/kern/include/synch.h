@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2001, 2002, 2003, 2004, 2005, 2008, 2009
+Copyright (c) 2000, 2001, 2002, 2003, 2004, 2005, 2008, 2009
  *	The President and Fellows of Harvard College.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -76,6 +76,11 @@ struct lock {
         char *lk_name;
         // add what you need here
         // (don't forget to mark things volatile as needed)
+        //volatile int  recurrent_count; //To support reentrancy
+        struct wchan *mutex_wchan;
+		struct spinlock mutex_spinLock; 
+		struct thread * holding_thread;
+		
 };
 
 struct lock *lock_create(const char *name);
@@ -115,6 +120,7 @@ struct cv {
         char *cv_name;
         // add what you need here
         // (don't forget to mark things volatile as needed)
+        struct wchan *cv_wchan;
 };
 
 struct cv *cv_create(const char *name);
