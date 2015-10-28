@@ -176,7 +176,7 @@ lock_create(const char *name)
 	}
        // lock->recurrent_count=0; //Set the initial recursive lock count to 0. We are implementing a recursive lock ( i.e. a re entrant lock ), so that if a thread calls itself then 
         spinlock_init(&lock->mutex_spinLock);
-        lock->holding_thread=curthread; // we initialize the holding thread's variable to the current thread
+        lock->holding_thread=NULL; // we initialize the holding thread's variable to the current thread
         
         return lock;
 }
@@ -203,7 +203,7 @@ lock_acquire(struct lock *lock)
 {
         // Write this
 		//KASSERT(lock->holding_hread==curthread);  //can only the holdingg thread should be able to destry the lock, else we can wait
-        (void)lock;  // suppress warning until code gets written
+      //  (void)lock;  // suppress warning until code gets written
         KASSERT(lock!=NULL);
         KASSERT(lock->holding_thread!=curthread);// the same thread should not call itsef , since we do not support re-entrancy 
         
@@ -230,7 +230,7 @@ lock_acquire(struct lock *lock)
         	wchan_sleep(lock->mutex_wchan);
         }
         
-        	
+        //spinlock_release(&lock->mutex_spinLock);	
         	
         	
 }
@@ -238,10 +238,12 @@ lock_acquire(struct lock *lock)
 void
 lock_release(struct lock *lock)
 {
-        // Write this
+	struct spinlock sem_lock;
+        volatile int sem_count;
+};
 		KASSERT(lock!=NULL);
 		KASSERT(curthread->t_in_interrupt == false);
-        (void)lock;  // suppress warning until code gets written
+        //(void)lock;  // suppress warning until code gets written
         spinlock_acquire(&lock->mutex_spinLock);
         if(lock->holding_thread==curthread)
         {
@@ -256,7 +258,7 @@ lock_release(struct lock *lock)
         	wchan_sleep(lock->mutex_wchan); // put the holding thread to sleep 
         	        spinlock_acquire(&lock->mutex_spinLock);
         }
-        spinlock_release(&lock->mutex_spinLock);	
+      //  spinlock_release(&lock->mutex_spinLock);	
         
 }
 
@@ -266,8 +268,10 @@ lock_do_i_hold(struct lock *lock)
 {
         // Write this
 
-        (void)lock;  // suppress warning until code gets written
-        spinlock_acquire(&lock->mutex_spinLock);
+        //(void)lock;  // suppress warning until code gets written
+         KASSERT(lock!=NULL);
+         KASSERT(curthread->t_in_interrupt == false);
+	 spinlock_acquire(&lock->mutex_spinLock);
 	
 		if(lock->holding_thread==curthread)
 		{
