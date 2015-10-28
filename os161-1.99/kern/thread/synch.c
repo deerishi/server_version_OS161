@@ -252,7 +252,7 @@ lock_release(struct lock *lock)
         	wchan_lock(lock->mutex_wchan);
         	spinlock_release(&lock->mutex_spinLock);
         	wchan_sleep(lock->mutex_wchan); // put the holding thread to sleep 
-        	        spinlock_acquire(&lock->mutex_spinLock);
+        	  //      spinlock_acquire(&lock->mutex_spinLock);
         }
       //  spinlock_release(&lock->mutex_spinLock);	
         
