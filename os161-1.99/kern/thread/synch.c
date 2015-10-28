@@ -238,11 +238,7 @@ lock_acquire(struct lock *lock)
 void
 lock_release(struct lock *lock)
 {
-	struct spinlock sem_lock;
-        volatile int sem_count;
-};
-		KASSERT(lock!=NULL);
-		KASSERT(curthread->t_in_interrupt == false);
+	KASSERT(curthread->t_in_interrupt == false);
         //(void)lock;  // suppress warning until code gets written
         spinlock_acquire(&lock->mutex_spinLock);
         if(lock->holding_thread==curthread)
