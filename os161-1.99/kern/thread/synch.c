@@ -186,7 +186,7 @@ lock_destroy(struct lock *lock)
 {
         KASSERT(lock != NULL);
         KASSERT(curthread->t_in_interrupt == false);
-		KASSERT(lock->holding_thread==curthread);  //can only the holdingg thread should be able to destry the lock, else we can wait
+		//KASSERT(lock->holding_thread==curthread);  //Any thread can destroy the lock. only the holding thread can release the lock
         // add stuff here as needed
         
         
@@ -216,22 +216,18 @@ lock_acquire(struct lock *lock)
          */
         KASSERT(curthread->t_in_interrupt == false);
         spinlock_acquire(&lock->mutex_spinLock);
-        if(lock->holding_thread==NULL)
-        {
-        
-        	//spinlock_acquire(&lock->mutex_spinLock); //We first acquire the spinlock which is being set by test ad set by this function
-       	 	lock->holding_thread=curthread; // lock the holding thread . What if the holding thread calls itslef, then we would have deadlock
-        	spinlock_release(&lock->mutex_spinLock); //wy should i relese the spinlocks, makes no sense to do in locks Release the Spinlock
-        }
-        else if(lock->holding_thread!=curthread)
+      
+        //spinlock_release(&lock->mutex_spinLock);	
+        while(lock->holding_thread!=NULL)
         {
         	wchan_lock(lock->mutex_wchan);
 			spinlock_release(&lock->mutex_spinLock);
         	wchan_sleep(lock->mutex_wchan);
+        	spinlock_acquire(&lock->mutex_spinLock);
         }
         
-        //spinlock_release(&lock->mutex_spinLock);	
-        	
+        lock->holding_thread=curthread; // lock the holding thread . What if the holding thread calls itslef, then we would have deadlock
+        spinlock_release(&lock->mutex_spinLock); //wy should i relese the spinlocks, makes no sense to do in locks Release the Spinlock	
         	
 }
 
@@ -342,11 +338,14 @@ cv_wait(struct cv *cv, struct lock *lock)
     (void)lock;  // suppress warning until code gets written
     KASSERT(cv!=NULL);
 	KASSERT(lock!=NULL);
-     KASSERT(curthread->t_in_interrupt == false);
-       	lock_acquire(lock);
+   //  KASSERT(curthread->t_in_interrupt == false);
+   KASSERT(lock->holding_thread==curthread);
+       	//lock_acquire(lock);
+       	
         wchan_lock(cv->cv_wchan);
         lock_release(lock);
         wchan_sleep(cv->cv_wchan);
+        lock_acquire(lock);
 
         
 }
@@ -359,10 +358,12 @@ cv_signal(struct cv *cv, struct lock *lock)
 	(void)lock;  // suppress warning until code gets written
 	KASSERT(cv!=NULL);
 	KASSERT(lock!=NULL);
-	KASSERT(curthread->t_in_interrupt == false);
-	lock_acquire(lock);
+	KASSERT(lock->holding_thread==curthread);
+//	KASSERT(curthread->t_in_interrupt == false);
+	//;
 	wchan_wakeone(cv->cv_wchan);
-	lock_release(lock);
+	//lock_acquire(lock);
+	//lock_release(lock);
 }
 
 void
@@ -371,7 +372,9 @@ cv_broadcast(struct cv *cv, struct lock *lock)
 	// Write this
 	(void)cv;    // suppress warning until code gets written
 	(void)lock;  // suppress warning until code gets written
-	lock_acquire(lock);
+	//lock_acquire(lock);
+	KASSERT(lock->holding_thread==curthread);
 	wchan_wakeall(cv->cv_wchan);
-	lock_release(lock);
+	//lock_acquire(lock);
+	//lock_release(lock);
 }

@@ -79,7 +79,7 @@ struct lock {
         //volatile int  recurrent_count; //To support reentrancy
         struct wchan *mutex_wchan;
 		struct spinlock mutex_spinLock; 
-		volatile  struct thread * holding_thread;
+		volatile  struct thread * holding_thread; //it is set to a global variable. It has to be volatile
 		
 };
 
